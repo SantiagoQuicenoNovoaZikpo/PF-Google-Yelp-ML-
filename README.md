@@ -4,7 +4,7 @@
 # Yelp Data Analysis Project
 
 ## Overview
-This project involves the comprehensive analysis of Yelp data using Google Cloud. We will perform Exploratory Data Analysis (EDA), Extract, Transform, Load (ETL) processes, Machine Learning (ML) modeling, and create a Power BI dashboard. Our goal is to derive valuable insights and build predictive models to improve business decision-making.
+This project is undertaken by **SJA COSMOS DATA ADVISORS**. We have been contracted by a company that wants to open a new restaurant. Our task is to determine the best city for this new restaurant based on comprehensive data analysis. This involves performing Exploratory Data Analysis (EDA), Extract, Transform, Load (ETL) processes, Machine Learning (ML) modeling, and creating a Power BI dashboard to present our findings.
 
 ## Table of Contents
 - [Project Setup](#project-setup)
@@ -79,7 +79,7 @@ This project involves the comprehensive analysis of Yelp data using Google Cloud
 ## Power BI Dashboard
 1. **Connect Power BI** to BigQuery.
 2. **Create interactive visualizations** and reports.
-3. **Share insights** with stakeholders through the Power BI dashboard.
+3. **Present insights and recommendations** on the best city to open the new restaurant, backed by data analysis.
 
 ## Contributors
 - **Your Name** - Project Lead
@@ -88,4 +88,5 @@ This project involves the comprehensive analysis of Yelp data using Google Cloud
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 

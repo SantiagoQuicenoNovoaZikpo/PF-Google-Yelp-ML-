@@ -1,0 +1,25 @@
+# Ignorar datos grandes y resultados procesados
+data/
+**/processed/
+**/output/
+
+# Archivos temporales de Python
+*.pyc
+__pycache__/
+
+# Archivos de configuración de entornos virtuales
+venv/
+.env
+
+# Archivos de Power BI y cache
+*.pbix
+*.pbit
+*.tmp
+
+# Archivos de logs
+*.log
+logs/
+
+# Archivos relacionados con IDEs
+.idea/
+.vscode/

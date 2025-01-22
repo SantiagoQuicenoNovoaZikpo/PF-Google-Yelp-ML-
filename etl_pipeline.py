@@ -66,7 +66,7 @@ default_args = {
 with DAG(
     dag_id="etl_pipeline",
     default_args=default_args,
-    schedule_interval="0 * * * *",  # Cada hora
+    schedule="0 * * * *",  # Cada hora
     catchup=False,
 ) as dag:
 

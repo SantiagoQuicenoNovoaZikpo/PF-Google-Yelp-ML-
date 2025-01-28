@@ -1,28 +1,41 @@
-import os
-import pandas as pd
-from google.cloud import storage
+def process_all_files(event, context):
+    from google.cloud import storage
+    import os
+    import pandas as pd
 
-def process_json_file(data, context):
-    """Procesa archivos JSON al ser subidos al bucket."""
+    # Configuración del cliente de almacenamiento
     client = storage.Client()
-    bucket_name = os.environ['BUCKET_NAME']  # Bucket donde se almacenan los archivos
-    processed_folder = "processed/"  # Carpeta de salida en el bucket
-
-    # Obtener detalles del archivo subido
+    bucket_name = os.environ["BUCKET_NAME"]
     bucket = client.get_bucket(bucket_name)
-    blob = bucket.blob(data['name'])
 
-    # Descargar y procesar el archivo JSON
-    try:
-        content = blob.download_as_text()
-        df = pd.read_json(content, lines=True)
+    # Información del archivo subido
+    file_name = event["name"]
+    input_blob = bucket.blob(file_name)
 
-        # Tomar una muestra de 10 filas
-        df_sample = df.sample(n=min(10, len(df)), random_state=42)
+    # Verifica si el archivo es un JSON
+    if file_name.endswith(".json"):
+        print(f"Procesando archivo: {file_name}")
+        local_path = f"/tmp/{file_name.split('/')[-1]}"
 
-        # Guardar el archivo procesado en el bucket
-        output_blob = bucket.blob(processed_folder + f"sample_{data['name']}")
-        output_blob.upload_from_string(df_sample.to_json(orient="records", lines=True))
-        print(f"Archivo procesado y guardado: {processed_folder}sample_{data['name']}")
-    except Exception as e:
-        print(f"Error procesando el archivo: {e}")
+        # Descarga el archivo al sistema local (temporal)
+        input_blob.download_to_filename(local_path)
+
+        # Procesar el archivo línea por línea
+        output_file = f"processed/sample_{file_name}"
+        output_blob = bucket.blob(output_file)
+
+        try:
+            with open(local_path, "r") as f:
+                processed_data = []
+                for line in f:
+                    # Convierte cada línea a un dict
+                    data = pd.read_json(line, lines=True)
+                    # Realiza algún procesamiento (ejemplo: tomar solo las 10 primeras líneas)
+                    processed_data.append(data)
+
+                # Guarda los datos procesados en la nube
+                pd.concat(processed_data).to_json(local_path, orient="records", lines=True)
+                output_blob.upload_from_filename(local_path)
+                print(f"Archivo procesado guardado en: {output_file}")
+        except Exception as e:
+            print(f"Error al procesar el archivo: {e}")

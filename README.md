@@ -1,4 +1,3 @@
-
 ![WhatsApp Image 2025-01-15 at 1 17 45 AM](https://github.com/user-attachments/assets/941f9a8e-09f0-4efe-a187-bca099eeeff7)
 
 # Yelp Data Analysis Project
@@ -13,6 +12,7 @@ This project is undertaken by **SJA COSMOS DATA ADVISORS**. We have been contrac
 - [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda)
 - [ETL Process](#etl-process)
 - [Machine Learning](#machine-learning)
+- [Deploying the ML Model on Streamlit](#deploying-the-ml-model-on-streamlit)
 - [Power BI Dashboard](#power-bi-dashboard)
 - [Contributors](#contributors)
 - [License](#license)
@@ -37,6 +37,8 @@ This project is undertaken by **SJA COSMOS DATA ADVISORS**. We have been contrac
 - **Google Cloud Platform (GCP)**:
   - BigQuery
   - Cloud Storage
+  - Cloud Functions
+  - Cloud Shell
   - AI Platform
 - **Python**:
   - pandas
@@ -44,6 +46,7 @@ This project is undertaken by **SJA COSMOS DATA ADVISORS**. We have been contrac
   - scikit-learn
   - seaborn
   - matplotlib
+- **Streamlit** for deploying the ML model
 - **Power BI** for data visualization
 - **Jupyter Notebooks** for interactive coding
 
@@ -76,17 +79,142 @@ This project is undertaken by **SJA COSMOS DATA ADVISORS**. We have been contrac
 4. **Evaluate model performance** and fine-tune hyperparameters.
 5. **Deploy models** using Google AI Platform.
 
+## Deploying the ML Model on Streamlit
+1. **Create the `app.py` file**:
+    - Contains the Streamlit application code, which loads the ML model and provides an interactive interface.
+    - Sample code:
+    ```python
+    import streamlit as st
+    import pandas as pd
+    from google.cloud import bigquery
+    from sklearn.cluster import KMeans
+    import numpy as np
+
+    # Configuration for BigQuery client
+    client = bigquery.Client()
+
+    # Load data from BigQuery
+    def load_data():
+        query = """
+        SELECT
+            name,
+            category,
+            avg_rating,
+            num_of_reviews,
+            state,
+            population
+        FROM
+            `instant-binder-447716-p6.yelp_google_data.processed_table`
+        """
+        df = client.query(query).to_dataframe()
+        return df
+
+    # Preprocess data
+    def preprocess_data(df):
+        df['category'] = df['category'].astype('category').cat.codes
+        df.fillna(0, inplace=True)
+        return df
+
+    # Train K-Means model
+    def train_model(df, n_clusters=5):
+        features = df[['avg_rating', 'num_of_reviews', 'category']]
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        df['cluster'] = kmeans.fit_predict(features)
+        return df, kmeans
+
+    # Get recommendations
+    def recommend(df, business_name):
+        cluster = df[df['name'] == business_name]['cluster'].values[0]
+        recommendations = df[df['cluster'] == cluster].sort_values(by='avg_rating', ascending=False)
+        return recommendations[['name', 'category', 'avg_rating']].head(5)
+
+    # Streamlit app
+    st.title("Business Recommendations")
+
+    # Load and preprocess data
+    df = load_data()
+    df = preprocess_data(df)
+
+    # Train K-Means model
+    df, model = train_model(df)
+
+    # User interface for recommendations
+    business_name = st.text_input("Business name", "Sample Business Name")
+    if st.button("Get recommendations"):
+        try:
+            recommendations = recommend(df, business_name)
+            st.write("Recommendations for the business:", business_name)
+            st.write(recommendations)
+        except IndexError:
+            st.write("Business not found in data.")
+
+    # Information about the cluster
+    if st.button("Show cluster information"):
+        try:
+            cluster = df[df['name'] == business_name]['cluster'].values[0]
+            st.write(f"The business '{business_name}' belongs to cluster {cluster}.")
+            st.write(f"Number of businesses in the cluster: {len(df[df['cluster'] == cluster])}")
+        except IndexError:
+            st.write("Business not found in data.")
+    ```
+
+2. **Create the `requirements.txt` file**:
+    - Lists all the dependencies required for the project.
+    - Sample content:
+    ```plaintext
+    streamlit
+    pandas
+    google-cloud-bigquery
+    scikit-learn
+    numpy
+    db-dtypes
+    google-cloud-storage
+    ```
+
+3. **Create the `Dockerfile`**:
+    - Used to containerize the Streamlit application.
+    - Sample content:
+    ```dockerfile
+    # Use a base image with Python
+    FROM python:3.9-slim
+
+    # Set the working directory
+    WORKDIR /app
+
+    # Copy the necessary files
+    COPY requirements.txt requirements.txt
+    COPY app.py app.py
+
+    # Install the dependencies
+    RUN pip install -r requirements.txt
+
+    # Expose the port on which the Streamlit app will run
+    EXPOSE 8080
+
+    # Command to run Streamlit
+    CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]
+    ```
+
+4. **Build and Deploy the Docker Image**:
+    - Build the Docker image using Cloud Build:
+    ```sh
+    gcloud builds submit --tag gcr.io/instant-binder-447716-p6/streamlit-app
+    ```
+    - Deploy the Docker image to Cloud Run:
+    ```sh
+    gcloud run deploy streamlit-app --image gcr.io/instant-binder-447716-p6/streamlit-app --platform managed --region us-central1 --allow-unauthenticated --timeout 300
+    ```
+
 ## Power BI Dashboard
 1. **Connect Power BI** to BigQuery.
 2. **Create interactive visualizations** and reports.
 3. **Present insights and recommendations** on the best city to open the new restaurant, backed by data analysis.
 
 ## Contributors
-- **Your Name** - Project Lead
-- **Collaborator Name** - Data Scientist
-- **Collaborator Name** - ML Engineer
+- **Santiago Quiceno** - Data Scientist / Cloud Architect
+- **Alfredo Sierra** - Data Engineer
+- **Jhon Carrillo** - Data Scientist
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 
